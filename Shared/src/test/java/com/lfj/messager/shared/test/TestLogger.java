@@ -1,3 +1,5 @@
+package com.lfj.messager.shared.test;
+
 /*
  * MessFox - Custom Messenger
  * The MIT License (MIT)
@@ -23,16 +25,19 @@
  */
 
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import com.lfj.messager.bcrypt.PasswordUtil;
+import com.lfj.messager.logger.Logger;
+import org.apache.logging.log4j.Level;
 
-public class TestBCrypt {
+public class TestLogger {
     @Test
     public void test(){
-        String password = "userName";
-        String hashed = PasswordUtil.hashPassword(password);
-        System.out.printf("Password > '%s' hashed to '%s'\n", password, hashed);
-        System.out.printf("Valid password '%s' > %b", password, PasswordUtil.validPassword(password, hashed));
-        assertTrue(PasswordUtil.validPassword(password, hashed));
+        Logger logger = new Logger(getClass());
+        logger.log(Level.INFO, "Test log info");
+        logger.log(Level.DEBUG, "Test log debug");
+        logger.log(Level.WARN, "Test log warn");
+        logger.log(Level.ERROR, "Test log error");
+        logger.log(Level.FATAL, "Test log fatal");
+        logger.log(Level.ALL, "Test log all");
+        logger.log(Level.TRACE, "Test log trace");
     }
 }
