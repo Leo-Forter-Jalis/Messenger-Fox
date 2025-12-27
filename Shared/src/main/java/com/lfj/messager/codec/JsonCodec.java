@@ -10,10 +10,10 @@ import com.lfj.messager.dto.Message;
 import java.io.IOException;
 
 public class JsonCodec {
+    private JsonCodec(){
+    }
     private static final ObjectMapper mapper = new ObjectMapper()
             .registerModule(new JavaTimeModule())
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_INJECT_VALUE, false)
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     public static Message coder(byte[] bytes) throws IOException {
         return mapper.readValue(bytes, Message.class);

@@ -17,7 +17,5 @@ public final class Time {
     public static String getTime(Instant instant){
         return instant.atZone(TIME_ZONE).format(UI_FORMAT);
     }
-    public static Instant nowInstant(){
-        return Instant.now();
-    }
+    public static Instant nowInstant(){return Instant.now();}
 }

@@ -22,8 +22,8 @@ public class Logger {
         StackTraceElement caller = StackLocatorUtil.calcLocation(FQCN);
         String callerClass = caller.getClassName();
         String callerMethod = caller.getMethodName();
-        String locationInfo = String.format("%s:%s", getSimpleName(callerClass), callerMethod);
-        String fullMessage = String.format("[Thread:%s | %s] >> %s", Thread.currentThread().getName(), locationInfo, message);
+        String locationInfo = String.format("%s.%s", getSimpleName(callerClass), callerMethod);
+        String fullMessage = String.format("[Thread:%s | %s] %s >> %s", Thread.currentThread().getName(), locationInfo, level.name(), message);
         if(logger instanceof AbstractLogger logger) logger.logIfEnabled(FQCN, level, null, fullMessage, (Throwable) null);
         else logger.log(level, message);
     }
