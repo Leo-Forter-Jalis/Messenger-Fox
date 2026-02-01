@@ -7,8 +7,8 @@ import java.time.format.FormatStyle;
 import java.util.Locale;
 
 public final class Time {
-    private static ZoneId TIME_ZONE = ZoneId.systemDefault();
-    private static DateTimeFormatter UI_FORMAT = DateTimeFormatter
+    private final static ZoneId TIME_ZONE = ZoneId.systemDefault();
+    private final static DateTimeFormatter UI_FORMAT = DateTimeFormatter
             .ofLocalizedDate(FormatStyle.MEDIUM)
             .withLocale(Locale.getDefault())
             .ofPattern("yyyy-MM-dd | HH:mm:ss");

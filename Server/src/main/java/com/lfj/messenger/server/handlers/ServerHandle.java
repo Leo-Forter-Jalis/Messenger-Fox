@@ -14,6 +14,7 @@ import com.lfj.messenger.server.service.ListUserService;
 import com.lfj.messenger.server.service.MessageSendService;
 import com.lfj.messenger.server.service.RegisterService;
 import com.lfj.messenger.time.Time;
+import io.netty.channel.Channel;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import org.slf4j.Logger;
@@ -31,7 +32,7 @@ public class ServerHandle extends ChannelInboundHandlerAdapter {
     private MessageSendService messageService;
     private ListUserService listUserService;
     private ConnectionRegistry connectionRegistry;
-    public ServerHandle(UUID uuidHandle, AuthService authService, RegisterService registerService, MessageSendService messageService, ListUserService listUserService, ConnectionRegistry connectionRegistry){
+    public ServerHandle(AuthService authService, RegisterService registerService, MessageSendService messageService, ListUserService listUserService, ConnectionRegistry connectionRegistry){
         this.logger = LoggerFactory.getLogger(ServerHandle.class);
         this.authService = authService;
         this.registerService = registerService;
@@ -106,7 +107,10 @@ public class ServerHandle extends ChannelInboundHandlerAdapter {
         this.registerService.registrationAsync(request)
                 .thenAcceptAsync((response -> {
                     logger.info("{}", response);
-                    if(response instanceof RegisterResponse responseR){ connectionRegistry.add(responseR.user().userId(), ctx.channel()); logger.info("User info id >> {}", responseR.user().userId()); }
+                    if(response instanceof RegisterResponse responseR){
+                        connectionRegistry.add(responseR.user().userId(), ctx.channel());
+                        logger.info("User info id >> {}", responseR.user().userId());
+                    }
                     ctx.executor().execute(() -> ctx.writeAndFlush(response));
                 }));
     }
@@ -115,10 +119,12 @@ public class ServerHandle extends ChannelInboundHandlerAdapter {
         messageService.sendMessage(request)
                 .thenAcceptAsync(response -> {
                     ctx.executor().execute(()->{
-                        if(response instanceof MessageResponse responseM){
+                        s: if(response instanceof MessageResponse responseM){
                             connectionRegistry.display();
                             if(!connectionRegistry.isOnline(responseM.getReceiverId())) logger.info("User {} is not Online", responseM.getReceiverId());
-                            connectionRegistry.get(responseM.getReceiverId()).get().writeAndFlush(responseM);
+                            Channel channel = connectionRegistry.get(responseM.getReceiverId()).orElse(null);
+                            if(channel == null) break s;
+                            channel.writeAndFlush(responseM);
                             return;
                         }
                         ctx.writeAndFlush(response);

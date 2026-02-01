@@ -46,7 +46,7 @@ public class Main{
                             socketChannel.pipeline().addLast(
                                     new IdleStateHandler(80, 0, 0),
                                     new JsonCodec(),
-                                    new ServerHandle(UUID.randomUUID(), authService, registerService, messageService, userService, connectionRegistry)
+                                    new ServerHandle(authService, registerService, messageService, userService, connectionRegistry)
                             );
                         }
                     });

@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 public class ProtocolTest {
@@ -24,7 +25,7 @@ public class ProtocolTest {
             new GetMessageRequest(UUID.randomUUID(), Instant.now());
             new GetMessageResponse(UUID.randomUUID(), Instant.now());
             new ChatsRequest(UUID.randomUUID(), Instant.now());
-            new ChatsResponse(UUID.randomUUID(), Instant.now());
+            new ChatsResponse(UUID.randomUUID(), List.of(), Instant.now());
             new MessageRequest(UUID.randomUUID(), new MessageDTO(UUID.randomUUID(), null, UUID.randomUUID(), UUID.randomUUID(), MessageType.TEXT.name(), "", Instant.now()),Instant.now());
             new MessageResponse(UUID.randomUUID(), new MessageDTO(UUID.randomUUID(), null, UUID.randomUUID(), UUID.randomUUID(), MessageType.TEXT.name(), "АХАХАХАХХА", null), Instant.now());
         });

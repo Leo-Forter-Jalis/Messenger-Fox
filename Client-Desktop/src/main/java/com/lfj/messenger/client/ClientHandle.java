@@ -1,23 +1,39 @@
 package com.lfj.messenger.client;
 
+import com.lfj.messenger.client.events.net.*;
 import com.lfj.messenger.dto.Message;
+import com.lfj.messenger.dto.datatype.MessageDTO;
 import com.lfj.messenger.dto.datatype.UserDTO;
-import com.lfj.messenger.dto.request.HeartbeatRequest;
+import com.lfj.messenger.dto.request.*;
 import com.lfj.messenger.dto.response.*;
+import com.lfj.messenger.dto.types.MessageType;
 import com.lfj.messenger.dto.types.MessageTypeConstants;
+import com.lfj.messenger.eventbus.EventBus;
 import com.lfj.messenger.time.Time;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
+import io.netty.util.AttributeKey;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 public class ClientHandle extends ChannelInboundHandlerAdapter {
-    private static volatile UserDTO userDTO;
-    private static volatile List<UserDTO> userDTOS;
+    private EventBus eventBus;
+    private Client client;
+    public ClientHandle(EventBus eventBus, Client client){
+        this.eventBus = eventBus;
+        this.client = client;
+        this.eventBus.subscribe(AuthRequestEvent.class, this::authRequest);
+        this.eventBus.subscribe(RegisterRequestEvent.class, this::registerRequest);
+        this.eventBus.subscribe(MessageRequestEvent.class, this::messageRequest);
+        this.eventBus.subscribe(ChatsRequestEvent.class, this::chatsRequest);
+    }
+    @Override
+    public void channelActive(ChannelHandlerContext ctx) throws InterruptedException {
+    }
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object obj){
         if(!(obj instanceof Message message)) return;
@@ -25,26 +41,32 @@ public class ClientHandle extends ChannelInboundHandlerAdapter {
             case MessageTypeConstants.AUTH_RESPONSE -> {
                 System.out.println("Authorization success.");
                 AuthResponse response = (AuthResponse) message;
-                userDTO = response.user();
+                ctx.channel().attr(Attributes.user).set(response.user());
+                this.eventBus.publish(new AuthResponseEvent());
             }
             case MessageTypeConstants.REGISTER_RESPONSE -> {
                 System.out.println("Register success");
                 RegisterResponse response = (RegisterResponse) message;
-                userDTO = response.user();
+                ctx.channel().attr(Attributes.user).set(response.user());
+                this.eventBus.publish(new RegisterResponseEvent());
             }
             case MessageTypeConstants.MESSAGE_RESPONSE -> {
                 System.out.println("Message received");
                 MessageResponse response = (MessageResponse) message;
-                if(userDTOS == null || userDTOS.isEmpty()) return;
-                UserDTO sender = userDTOS.stream().filter(d -> d.userId().equals(response.getSenderId())).findFirst().orElse(null);
+                MessageDTO messageDTO = response.message();
+                Channel channel = this.client.getChannel().orElse(null);
+                if(channel == null || !channel.isActive()) return;
+                List<UserDTO> users = channel.attr(Attributes.users).get();
+                if(users == null) return;
+                UserDTO sender = users.stream().filter(u -> u.userId().equals(messageDTO.senderId())).findFirst().orElse(null);
                 if(sender == null) return;
-                System.out.printf("%s\nОтправитель >> %s\nСообщение >> %s\nДата отправки >> %s\n%s\n", "-".repeat(40), sender.displayName(), response.message().content(), Time.getTime(response.instant()), "-".repeat(40));
+                this.eventBus.publish(new MessageResponseEvent(sender.displayName(), messageDTO.content(), Time.getTime(messageDTO.instant())));
             }
             case MessageTypeConstants.CHATS_RESPONSE -> {
                 System.out.println("Chat_response");
                 ChatsResponse response = (ChatsResponse) message;
                 for(UserDTO user : ((ChatsResponse) message).users()) System.out.printf("%s - %s\n", user.userId(), user.displayName());
-                userDTOS = response.users();
+                ctx.channel().attr(Attributes.users).set(response.users());
             }
             case MessageTypeConstants.ERROR_RESPONSE -> {
                 ErrorResponse response = (ErrorResponse) message;
@@ -62,8 +84,56 @@ public class ClientHandle extends ChannelInboundHandlerAdapter {
             }
         }
     }
-    public Optional<UserDTO> user(){
-        return Optional.ofNullable(userDTO);
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause){
+        System.err.println("Error >> " + cause.getMessage());
+        cause.printStackTrace();
+        if(cause instanceof Error) ctx.close();
     }
-    public Optional<List<UserDTO>> users() { return Optional.ofNullable(userDTOS); }
+    private void authRequest(AuthRequestEvent event){
+        if(!client.isConnected()){
+            System.out.println("NOT");
+            return;
+        }
+        Channel channel = client.getChannel().orElse(null);
+        if(channel != null && channel.isActive()) channel.writeAndFlush(new AuthRequest(UUID.randomUUID(), event.email(), event.password(), Time.nowInstant()));
+    }
+    private void registerRequest(RegisterRequestEvent event){
+        if(!client.isConnected()){
+            System.out.println("NOT");
+            return;
+        }
+        Channel channel = client.getChannel().orElse(null);
+        if(channel != null && channel.isActive()) channel.writeAndFlush(new RegisterRequest(UUID.randomUUID(), event.name(), event.name(), event.email(), event.password(), Time.nowInstant()));
+    }
+    private void messageRequest (MessageRequestEvent event){
+        if(!client.isConnected()){
+            System.out.println("NOT");
+            return;
+        }
+        Channel channel = client.getChannel().orElse(null);
+        if(channel != null && channel.isActive()) {
+            UserDTO user = channel.attr(Attributes.user).get();
+            List<UserDTO> users = channel.attr(Attributes.users).get();
+            if(user != null && users != null){
+                UserDTO receiver = users.stream().filter(u -> u.displayName().equals(event.name())).findFirst().orElse(null);
+                if(receiver == null) return;
+                MessageDTO message = new MessageDTO(UUID.randomUUID(), null, user.userId(), receiver.userId(), MessageType.TEXT.name(), event.message(), Time.nowInstant());
+                channel.writeAndFlush(new MessageRequest(UUID.randomUUID(), message, Time.nowInstant()));
+            }
+        }
+        System.out.println("Проеб");
+    }
+    private void chatsRequest(ChatsRequestEvent event){
+        if(!client.isConnected()){
+            System.out.println("NOT");
+            return;
+        }
+        Channel channel = client.getChannel().orElse(null);
+        if(channel != null && channel.isActive()) channel.writeAndFlush(new ChatsRequest(UUID.randomUUID(), Time.nowInstant()));
+    }
+    public static class Attributes{
+        public static final AttributeKey<UserDTO> user = AttributeKey.valueOf("user");
+        public static final AttributeKey<List<UserDTO>> users = AttributeKey.valueOf("users");
+    }
 }

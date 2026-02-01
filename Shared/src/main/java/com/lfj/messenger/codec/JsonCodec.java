@@ -15,7 +15,9 @@ import java.security.InvalidParameterException;
 import java.util.List;
 
 public class JsonCodec extends ByteToMessageCodec<Message> {
-    private static final ObjectMapper MAPPER = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).registerModule(new JavaTimeModule());
+    private static final ObjectMapper MAPPER = new ObjectMapper()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            .registerModule(new JavaTimeModule()); // Нету модуля, нет взаимодействия
     private static final int MAX_LENGTH = 1024 * 1024;
     private static final Logger logger = LoggerFactory.getLogger(JsonCodec.class);
 
