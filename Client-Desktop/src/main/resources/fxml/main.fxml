@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.lfj.messenger.ui.controller.authw.AuthController">
+    <center>
+        <VBox>
+            <Label fx:id="title" text="Авторизация"/>
+            <TextField fx:id="emailField" promptText="Эл. почта"/>
+            <PasswordField fx:id="passField" promptText="Пароль"/>
+            <Label fx:id="label" text="Нет аккаунта"/>
+            <Button fx:id="auth" text="Auth" onAction="#onAction"/>
+        </VBox>
+    </center>
+</BorderPane>
