@@ -13,7 +13,7 @@ public record RegisterResponse(
         @JsonProperty("request_id") UUID requestId,
         @JsonProperty("user")UserDTO user,
         @JsonProperty("is_register") boolean isRegister,
-        @JsonProperty("istant") Instant instant
+        @JsonProperty("instant") Instant instant
 ) implements Response {
     public String type(){
         return MessageTypeConstants.REGISTER_RESPONSE;

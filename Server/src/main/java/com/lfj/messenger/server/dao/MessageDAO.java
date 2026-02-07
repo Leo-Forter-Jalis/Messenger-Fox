@@ -1,5 +1,6 @@
 package com.lfj.messenger.server.dao;
 
+import com.lfj.dev.annotations.ThreadSafe;
 import com.lfj.messenger.dto.request.GetMessageRequest;
 import com.lfj.messenger.dto.request.MessageRequest;
 import com.lfj.messenger.dto.response.MessageResponse;
@@ -26,7 +27,7 @@ public class MessageDAO {
         this();
         this.source = source;
     }
-
+    @ThreadSafe
     public Supplier<Optional<MessageResponse>> writeAndSendMessageAsync(MessageRequest request){
         return () -> writeAndSendMessage(request);
     }
@@ -34,7 +35,7 @@ public class MessageDAO {
     public Optional<MessageResponse> writeAndSendMessage(MessageRequest request){
         try(Connection connection = this.source.getConnection(); PreparedStatement stmt = connection.prepareStatement(WRITE_MESSAGE_TO_BD)) {
             stmt.setObject(1, request.message().messageId());
-            stmt.setObject(2, request.message().senderId()); // На char ID ты положил болт
+            stmt.setObject(2, request.message().sender().userId()); // На char ID ты положил болт
             stmt.setObject(3, request.message().receiverId());
             stmt.setString(4, request.message().content());
             stmt.executeUpdate();

@@ -1,5 +1,6 @@
 package com.lfj.messenger.server.dao;
 
+import com.lfj.dev.annotations.ThreadSafe;
 import com.lfj.messenger.bcrypt.PasswordUtil;
 import com.lfj.messenger.dto.datatype.UserDTO;
 import com.lfj.messenger.dto.request.AuthRequest;
@@ -24,9 +25,9 @@ public class UserDAO {
     private Logger logger;
 
     private static final String INSERT = "INSERT INTO users_table(user_id, email, name, user_name, password, create_date) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (email) DO NOTHING";
-    private static final String SELECT_BY_USER_EMAIL = "SELECT user_id, email, name, user_name, password, create_date FROM users_table WHERE email = ?";
-    private static final String SELECT_ALL_USER = "SELECT user_id, email, name, user_name, create_date FROM users_table";
-    private static final String SELECT_BY_USER_ID = "SELECT user_id, email, name, user_name, create_date FROM users_table WHERE user_id = ?";
+    private static final String SELECT_BY_USER_EMAIL = "SELECT user_id, name, user_name, password, create_date FROM users_table WHERE email = ?";
+    private static final String SELECT_ALL_USER = "SELECT user_id, name, user_name, create_date FROM users_table";
+    private static final String SELECT_BY_USER_ID = "SELECT user_id, name, user_name, create_date FROM users_table WHERE user_id = ?";
 
     private UserDAO(){ this.logger = LoggerFactory.getLogger(UserDAO.class); }
 
@@ -34,15 +35,13 @@ public class UserDAO {
         this();
         this.source = source;
     }
-
-    public Supplier<Optional<UserDTO>> authorizationAsync(AuthRequest request){
-        return () -> authorizationUser(request);
-    }
-
+    @ThreadSafe
+    public Supplier<Optional<UserDTO>> authorizationAsync(AuthRequest request){ return () -> authorizationUser(request); }
+    @ThreadSafe
     public Supplier<Optional<UserDTO>> registerAsync(RegisterRequest request){
         return () -> registerUser(request);
     }
-
+    @ThreadSafe
     public Supplier<List<UserDTO>> userList(ChatsRequest request){ return this::users; }
 
     public Optional<UserDTO> registerUser(RegisterRequest request){
@@ -57,7 +56,7 @@ public class UserDAO {
             stmt.setString(5, request.password()); // Временное решение\
             stmt.setObject(6, Timestamp.from(instant));
             stmt.executeUpdate();
-            return Optional.of(new UserDTO(uuid, request.displayName(), request.userName(), request.email(), instant));
+            return Optional.of(new UserDTO(uuid, request.displayName(), request.userName(), instant));
         } catch (SQLException e) {
             logger.error("{} - {}. State - {}", e.getMessage(), e.getErrorCode(), e.getSQLState());
             e.printStackTrace();
@@ -117,7 +116,6 @@ public class UserDAO {
                 rs.getObject("user_id", UUID.class),
                 rs.getString("name"),
                 rs.getString("user_name"),
-                rs.getString("email"),
                 rs.getTimestamp("create_date").toInstant()
         );
     }

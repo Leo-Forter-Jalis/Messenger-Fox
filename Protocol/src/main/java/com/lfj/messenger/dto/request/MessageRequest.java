@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import com.lfj.messenger.dto.datatype.MessageDTO;
+import com.lfj.messenger.dto.datatype.UserDTO;
 import com.lfj.messenger.dto.response.MessageResponse;
 import com.lfj.messenger.dto.types.MessageTypeConstants;
 
@@ -16,7 +17,7 @@ public record MessageRequest(
         @JsonProperty("message") MessageDTO message,
         @JsonProperty("instant") Instant instant
 ) implements Request {
-    public UUID getSenderId(){ return message.senderId(); }
+    public UserDTO getSender(){ return message.sender(); }
     public UUID getChatId(){ return message.chatId(); }
     public String type(){ return MessageTypeConstants.MESSAGE_REQUEST; }
     public MessageResponse convertToResponse(){

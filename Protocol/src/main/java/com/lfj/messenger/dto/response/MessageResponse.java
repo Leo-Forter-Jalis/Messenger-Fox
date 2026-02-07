@@ -2,6 +2,7 @@ package com.lfj.messenger.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.lfj.messenger.dto.datatype.MessageDTO;
+import com.lfj.messenger.dto.datatype.UserDTO;
 import com.lfj.messenger.dto.types.MessageTypeConstants;
 
 import java.time.Instant;
@@ -17,7 +18,7 @@ public record MessageResponse(
         if(message == null) throw new IllegalArgumentException("message is null");
         if(instant == null) throw new IllegalArgumentException("instant is null");
     }
-    public UUID getSenderId(){ return this.message.senderId(); }
+    public UserDTO getSender(){ return this.message.sender(); }
     public UUID getReceiverId(){ return this.message.receiverId(); }
     public String type(){ return MessageTypeConstants.MESSAGE_RESPONSE; }
 }
