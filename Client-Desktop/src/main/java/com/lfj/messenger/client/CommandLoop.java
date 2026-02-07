@@ -1,66 +1,32 @@
 package com.lfj.messenger.client;
 
-import com.lfj.messenger.client.events.net.*;
+import com.lfj.dev.annotations.RequiresDeletion;
 import com.lfj.messenger.eventbus.EventBus;
+import com.lfj.messenger.events.net.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
+@RequiresDeletion(version = "0.1", replacement = "com.lfj.messenger.ui.Window")
 public class CommandLoop {
     public boolean isInterrupt = false;
-    private boolean connected = false;
+    private Logger logger;
     private EventBus eventBus;
-    void main(){
-        this.eventBus = new EventBus();
+    public CommandLoop(EventBus eventBus){
+        this.logger = LoggerFactory.getLogger(CommandLoop.class);
+        this.eventBus = eventBus;
+    }
+    public void startLoop(){
         this.eventBus.subscribe(ShutdownEvent.class, event -> isInterrupt = true);
         this.eventBus.subscribe(AuthResponseEvent.class, this::authResponse);
         this.eventBus.subscribe(RegisterResponseEvent.class, this::registerResponse);
         this.eventBus.subscribe(MessageResponseEvent.class, this::messageResponse);
-
-        this.eventBus.subscribe(ConnectionEvent.class, event -> connected = true);
-
-        ExecutorService service = Executors.newSingleThreadExecutor();
-        Client client = new Client(eventBus);
-        service.submit(() -> {
-            try {
-                client.start();
-            }catch (Exception e){
-                isInterrupt = true;
-                e.printStackTrace();
-            }
-        });
-        int waitConnected = 0;
-        while(!connected && waitConnected < 30){
-            try {
-                TimeUnit.SECONDS.sleep(4);
-                waitConnected++;
-            } catch (InterruptedException e){
-                e.printStackTrace();
-                break;
-            }
-        }
-        if(!connected){
-            System.err.println("Failed connect to server. Shutting down...");
-            eventBus.publish(new ShutdownEvent());
-        }else{
-            System.out.println("Connected!");
-            loop();
-        }
-        service.shutdown();
-        try {
-            if (service.awaitTermination(5, TimeUnit.SECONDS)) service.shutdownNow();
-        }catch (InterruptedException e){
-            service.shutdownNow();
-            e.printStackTrace();
-        }
-        service.close();
-        Thread.currentThread().interrupt();
+        loop();
     }
-    public void loop(){
+    private void loop(){
         while (!isInterrupt){
             try {
                 BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
@@ -69,25 +35,25 @@ public class CommandLoop {
                 switch (strings[0]) {
                     case "reg" -> {
                         if (strings.length != 5){
-                            System.err.printf("The number of arguments in the line %d instead 5\n", strings.length);
+                            logger.warn("The number of arguments in the line {} instead 5", strings.length);
                             return;
                         }
                         if (!strings[3].equals(strings[4])){
-                            System.err.println("The password doesn't match");
+                            logger.warn("The password doesn't match");
                             return;
                         }
                         this.eventBus.publish(new RegisterRequestEvent(strings[1], strings[2], strings[3]));
                     }
                     case "auth" -> {
                         if (strings.length != 3) {
-                            System.err.printf("The number of arguments in the line %d instead 3\n", strings.length);
+                            logger.warn("The number of arguments in the line {} instead 3", strings.length);
                             return;
                         }
                         this.eventBus.publish(new AuthRequestEvent(strings[1], strings[2]));
                     }
                     case "message" -> {
                         if(strings.length != 3)
-                            System.err.println("The number of arguments in the line %d instead 3\n");
+                            logger.warn("The number of arguments in the line {} instead 3", strings.length);
                         this.eventBus.publish(new MessageRequestEvent(strings[1], strings[2]));
                     }
                     case "quit" -> {
@@ -96,21 +62,22 @@ public class CommandLoop {
                     case "chats" ->{
                         this.eventBus.publish(new ChatsRequestEvent());
                     }
-                    default -> System.err.println("Not found command");
+                    default -> logger.warn("Not found command");
                 }
             }catch (IOException e){
+                logger.error("Client command loop error", e);
                 e.printStackTrace();
                 eventBus.publish(new ShutdownEvent());
             }
         }
     }
     private void authResponse(AuthResponseEvent event){
-        System.out.println("Auth success!");
+        logger.info("Auth success!");
     }
     private void registerResponse(RegisterResponseEvent event){
-        System.out.println("Registration success!");
+        logger.info("Registration success!");
     }
     private void messageResponse(MessageResponseEvent event){
-        System.out.printf("%s\nName >> %s\nMessage >> %s\nTime >> %s\n%s\n", "-".repeat(40), event.name(), event.message(), event.time(), "-".repeat(40));
+        logger.info("{}\nName >> {}\nMessage >> {}\nTime >> {}\n{}", "-".repeat(40), event.name(), event.message(), event.time(), "-".repeat(40));
     }
 }
