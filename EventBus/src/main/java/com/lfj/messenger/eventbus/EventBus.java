@@ -1,5 +1,7 @@
 package com.lfj.messenger.eventbus;
 
+import com.lfj.dev.annotations.ThreadSafe;
+
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -44,7 +46,7 @@ public class EventBus {
         for(SubEvent<?> subEvent : list)
             ((SubEvent<E>) subEvent).event().accept(event);
     }
-
+    @ThreadSafe
     public <E extends Event> void publishAsync(E event, ExecutorService executorService){
         CompletableFuture.runAsync(() -> publish(event), executorService);
     }
@@ -55,7 +57,7 @@ public class EventBus {
     public void clear(){
         this.subscribes.clear();
     }
-
+    @ThreadSafe
     public <E extends Event> void publishAsync(E event) {
         CompletableFuture.runAsync(() -> publish(event));
     }
