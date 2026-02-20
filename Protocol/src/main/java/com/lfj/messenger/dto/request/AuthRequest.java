@@ -11,12 +11,14 @@ import java.util.UUID;
 public record AuthRequest(
     @JsonProperty("request_id") UUID requestId,
     @JsonProperty("email") String email,
-    @JsonProperty(value = "password") String password,
+    @JsonProperty("password") String password,
     @JsonProperty("instant") Instant instant
 ) implements Request {
     public AuthRequest{
-        Objects.requireNonNull(requestId, "RequestId cannot be null"); Objects.requireNonNull(email, "Email cannot be null"); Objects.requireNonNull(password, "Password cannot be null"); Objects.requireNonNull(instant, "Instant cannot be null");
-
+        Objects.requireNonNull(requestId, "RequestId cannot be null");
+        Objects.requireNonNull(email, "Email cannot be null");
+        Objects.requireNonNull(password, "Password cannot be null");
+        Objects.requireNonNull(instant, "Instant cannot be null");
     }
     @JsonProperty("type")
     public String type(){

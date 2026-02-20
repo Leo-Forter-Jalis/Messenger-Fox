@@ -25,7 +25,7 @@ public class MessageSendService {
     public CompletableFuture<Response> sendMessage(MessageRequest request){
         return CompletableFuture.supplyAsync(messageDAO.writeAndSendMessageAsync(request), this.threadManager.getIoExecutor())
                 .thenApplyAsync(optional -> {
-                    if(optional.isPresent()) return optional.get();
+                    if(optional.isPresent()) return new MessageResponse(request.requestId(), optional.get(), Time.nowInstant());
                     else return new ErrorResponse(request.requestId(), (short) 300, "Error sending message", Time.nowInstant());
                 }, this.threadManager.getIoExecutor());
     }

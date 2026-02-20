@@ -27,6 +27,7 @@ import java.util.UUID;
         @Type(value= RegisterResponse.class, name= MessageTypeConstants.REGISTER_RESPONSE),
         @Type(value= MessageRequest.class, name= MessageTypeConstants.MESSAGE_REQUEST),
         @Type(value= MessageResponse.class, name= MessageTypeConstants.MESSAGE_RESPONSE),
+        @Type(value = CreateChatRequest.class, name = MessageTypeConstants.CREATE_CHAT_REQUEST),
         @Type(value= ChatsRequest.class, name= MessageTypeConstants.CHATS_REQUEST),
         @Type(value= ChatsResponse.class, name= MessageTypeConstants.CHATS_RESPONSE),
         @Type(value= GetMessageRequest.class, name= MessageTypeConstants.GET_MESSAGE_REQUEST),

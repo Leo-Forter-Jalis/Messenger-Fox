@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Instant;
 import java.util.UUID;
 
-import com.lfj.messenger.dto.datatype.UserDTO;
+import com.lfj.messenger.dto.datatype.server.UserDTO;
 import com.lfj.messenger.dto.types.MessageTypeConstants;
 
 @JsonTypeName(MessageTypeConstants.AUTH_RESPONSE)
@@ -16,9 +16,6 @@ public record AuthResponse(
         @JsonProperty("is_auth") boolean isAuth,
         @JsonProperty("instant") Instant instant
 ) implements Response {
-    public AuthResponse{
-
-    }
     public String type(){
         return MessageTypeConstants.AUTH_RESPONSE;
     }

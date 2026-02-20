@@ -2,7 +2,7 @@ package com.lfj.messenger.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.lfj.messenger.dto.datatype.UserDTO;
+import com.lfj.messenger.dto.datatype.server.UserDTO;
 import com.lfj.messenger.dto.types.MessageTypeConstants;
 
 import java.time.Instant;
