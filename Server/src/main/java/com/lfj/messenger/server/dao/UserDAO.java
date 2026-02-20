@@ -2,35 +2,38 @@ package com.lfj.messenger.server.dao;
 
 import com.lfj.dev.annotations.ThreadSafe;
 import com.lfj.messenger.bcrypt.PasswordUtil;
-import com.lfj.messenger.dto.datatype.UserDTO;
+import com.lfj.messenger.dto.datatype.server.UserDTO;
 import com.lfj.messenger.dto.request.AuthRequest;
-import com.lfj.messenger.dto.request.ChatsRequest;
 import com.lfj.messenger.dto.request.RegisterRequest;
 import com.lfj.messenger.time.Time;
+import com.lfj.messenger.uuid7.UUIDv7;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.Timestamp;
+import java.sql.Statement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 public class UserDAO {
     private DataSource source;
     private Logger logger;
-
-    private static final String INSERT = "INSERT INTO users_table(user_id, email, name, user_name, password, create_date) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (email) DO NOTHING";
-    private static final String SELECT_BY_USER_EMAIL = "SELECT user_id, name, user_name, password, create_date FROM users_table WHERE email = ?";
-    private static final String SELECT_ALL_USER = "SELECT user_id, name, user_name, create_date FROM users_table";
-    private static final String SELECT_BY_USER_ID = "SELECT user_id, name, user_name, create_date FROM users_table WHERE user_id = ?";
-
+    private static final String INSERT = "INSERT INTO users_table(user_id, email, display_name, user_name, password, created_at) VALUES (?, ?, ?, ?, ?, ?)";
+    private static final String SELECT_BY_USER_EMAIL = "SELECT user_id, display_name, user_name, password, created_at FROM users_table WHERE email = ?";
+    private static final String SELECT_ALL_USER = "SELECT user_id, display_name, user_name, created_at FROM users_table";
+    private static final String SELECT_BY_USER_ID = "SELECT user_id, display_name, user_name, created_at FROM users_table WHERE user_id = ?";
     private UserDAO(){ this.logger = LoggerFactory.getLogger(UserDAO.class); }
-
     public UserDAO(DataSource source) {
         this();
         this.source = source;
@@ -42,47 +45,44 @@ public class UserDAO {
         return () -> registerUser(request);
     }
     @ThreadSafe
-    public Supplier<List<UserDTO>> userList(ChatsRequest request){ return this::users; }
+    public Supplier<Set<UserDTO>> userList(Set<UUID> ids){ return () -> users(ids); }
 
+    @ThreadSafe
     public Optional<UserDTO> registerUser(RegisterRequest request){
         logger.info("Register users...");
         try(Connection connection = this.source.getConnection(); PreparedStatement stmt = connection.prepareStatement(INSERT, Statement.RETURN_GENERATED_KEYS)){
-            UUID uuid = UUID.randomUUID();
+            UUID uuid = UUIDv7.next();
             Instant instant = Time.nowInstant();
             stmt.setObject(1, uuid);
             stmt.setString(2, request.email());
             stmt.setString(3, request.displayName());
-            stmt.setString(4, request.userName());
-            stmt.setString(5, request.password()); // Временное решение\
+            stmt.setString(4, null);
+            stmt.setString(5, PasswordUtil.hashPassword(request.password()));
             stmt.setObject(6, Timestamp.from(instant));
             stmt.executeUpdate();
-            return Optional.of(new UserDTO(uuid, request.displayName(), request.userName(), instant));
+            return Optional.of(new UserDTO(uuid, request.displayName(), null, instant));
         } catch (SQLException e) {
             logger.error("{} - {}. State - {}", e.getMessage(), e.getErrorCode(), e.getSQLState());
             e.printStackTrace();
             return Optional.empty();
         }
     }
-
     public Optional<UserDTO> authorizationUser(AuthRequest request) {
         logger.info("authorization user...");
         try(Connection connection = this.source.getConnection(); PreparedStatement stmt = connection.prepareStatement(SELECT_BY_USER_EMAIL)){
             stmt.setString(1, request.email());
             try(ResultSet rs = stmt.executeQuery()){
                 if(rs.next()){
-                    if(request.password().equals(rs.getString("password")))
-                    return Optional.ofNullable(mapToUserDTO(rs));
+                    if(PasswordUtil.validPassword(request.password(), rs.getString("password"))) return Optional.ofNullable(mapToUserDTO(rs));
                 }
             }
             logger.warn("User not found!");
             return Optional.empty();
         }catch (SQLException e){
-            logger.error("{} - {}. State: {}", e.getMessage(), e.getErrorCode(), e.getSQLState());
-            logger.error("Error", e);
+            logger.error("{} - {}. State: {}", e.getMessage(), e.getErrorCode(), e.getSQLState(), e);
             return Optional.empty();
         }
     }
-
     public Optional<UserDTO> findUserById(UUID uuid){
         try(Connection connection = this.source.getConnection(); PreparedStatement stmt = connection.prepareStatement(SELECT_BY_USER_ID)){
             stmt.setObject(1, uuid);
@@ -95,29 +95,25 @@ public class UserDAO {
             return Optional.empty();
         }
     }
-
-    public List<UserDTO> users(){
-        try(Connection connection = this.source.getConnection(); PreparedStatement stmt = connection.prepareStatement(SELECT_ALL_USER)) {
-            ResultSet rs = stmt.executeQuery();
-            List<UserDTO> list = new ArrayList();
-            while (rs.next()){
-                list.add(mapToUserDTO(rs));
+    public Set<UserDTO> users(Set<UUID> ids){
+        Set<UserDTO> list = new HashSet<>();
+        try(Connection connection = this.source.getConnection(); PreparedStatement stmt = connection.prepareStatement(SELECT_BY_USER_ID)) {
+            for(UUID id : ids){
+                stmt.setObject(1, id);
+                try(ResultSet rs = stmt.executeQuery()){ if(rs.next()) list.add(mapToUserDTO(rs)); }
             }
-            return list;
         }catch (SQLException e){
             logger.error("{} - {}. {}", e.getMessage(), e.getErrorCode(), e.getSQLState());
             logger.error("Error", e);
-            return List.of();
         }
+        return list;
     }
-
     private UserDTO mapToUserDTO(ResultSet rs) throws SQLException{
         return new UserDTO(
                 rs.getObject("user_id", UUID.class),
-                rs.getString("name"),
+                rs.getString("display_name"),
                 rs.getString("user_name"),
-                rs.getTimestamp("create_date").toInstant()
+                rs.getTimestamp("created_at").toInstant()
         );
     }
-
 }

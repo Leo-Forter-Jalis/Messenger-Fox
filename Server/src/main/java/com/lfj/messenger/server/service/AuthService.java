@@ -1,6 +1,6 @@
 package com.lfj.messenger.server.service;
 
-import com.lfj.messenger.dto.datatype.UserDTO;
+import com.lfj.messenger.dto.datatype.server.UserDTO;
 import com.lfj.messenger.dto.request.AuthRequest;
 import com.lfj.messenger.dto.response.AuthResponse;
 import com.lfj.messenger.dto.response.ErrorResponse;

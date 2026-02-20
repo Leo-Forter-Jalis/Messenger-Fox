@@ -10,7 +10,6 @@ public class ThreadManager {
         this.cpuExecutor = Executors.newFixedThreadPool(15);
         this.ioExecutor = Executors.newVirtualThreadPerTaskExecutor();
     }
-
     public ExecutorService getCpuExecutor() { return this.cpuExecutor; }
     public ExecutorService getIoExecutor() { return this.ioExecutor; }
     public void shutdown(){ this.cpuExecutor.shutdown(); this.ioExecutor.shutdown(); }
