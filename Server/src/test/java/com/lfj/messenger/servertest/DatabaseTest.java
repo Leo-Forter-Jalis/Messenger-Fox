@@ -49,7 +49,7 @@ public class DatabaseTest {
             );
             """.stripIndent();
     public static DataSource getDataSource(){
-        DataSource dataSource = DataBase.createDataSource("jdbc:h2:mem:testdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1", "us", "");
+        DataSource dataSource = DataBase.createDataSource("jdbc:h2:mem:testdb;MODE=PostgreSQL", "test", "");
         initSchema(dataSource);
         return dataSource;
     }

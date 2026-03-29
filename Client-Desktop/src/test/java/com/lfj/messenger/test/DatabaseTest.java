@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 import com.lfj.messenger.base.db.Database;
 
-import java.sql.SQLException;
 import java.util.UUID;
 
 public class DatabaseTest {
