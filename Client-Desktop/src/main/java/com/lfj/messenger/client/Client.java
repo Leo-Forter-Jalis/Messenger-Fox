@@ -1,9 +1,10 @@
 package com.lfj.messenger.client;
 
 import com.lfj.messenger.events.net.ConnectionEvent;
-import com.lfj.messenger.codec.JsonCodec;
+//import com.lfj.messenger.codec.JsonCodec;
 import com.lfj.messenger.eventbus.EventBus;
 import com.lfj.messenger.events.net.ShutdownEvent;
+import com.lfj.messfox.shared.codec.JsonCodec;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -26,9 +27,14 @@ public class Client {
    private EventBus eventBus;
    private volatile boolean connected = false;
    private CountDownLatch downLatch = new CountDownLatch(1);
+   private boolean isTest = false;
    public Client(EventBus eventBus){
       this.logger = LoggerFactory.getLogger(Client.class);
       this.eventBus = eventBus;
+   }
+   public Client(EventBus eventBus, boolean isTest){
+      this(eventBus);
+      this.isTest = isTest;
    }
    public void start(){
       this.loopGroup = new NioEventLoopGroup();
@@ -43,7 +49,7 @@ public class Client {
                        ch.pipeline().addLast(
                                new IdleStateHandler(0, 75, 0),
                                new JsonCodec(),
-                               new ClientHandle(eventBus, Client.this)
+                               getClientHandler()
                        );
                     }
                  });
@@ -70,6 +76,9 @@ public class Client {
       }catch (Exception e){
          e.printStackTrace();
       }
+   }
+   private ChannelHandler getClientHandler(){
+      return isTest ? new TestClientHandler(eventBus, this) : new ClientHandle(eventBus, this);
    }
    private void shutdown(ShutdownEvent event) {
       try {

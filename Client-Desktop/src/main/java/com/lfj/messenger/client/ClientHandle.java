@@ -1,10 +1,9 @@
 package com.lfj.messenger.client;
 
-import com.lfj.dev.annotations.EventBusPublisher;
-import com.lfj.messenger.base.db.UserDB;
 import com.lfj.messenger.dto.Message;
-import com.lfj.messenger.dto.datatype.MessageDTO;
-import com.lfj.messenger.dto.datatype.UserDTO;
+import com.lfj.messenger.dto.datatype.client.User;
+import com.lfj.messenger.dto.datatype.server.MessageDTO;
+import com.lfj.messenger.dto.datatype.server.UserDTO;
 import com.lfj.messenger.dto.request.*;
 import com.lfj.messenger.dto.response.*;
 import com.lfj.messenger.dto.types.MessageType;
@@ -12,12 +11,15 @@ import com.lfj.messenger.dto.types.MessageTypeConstants;
 import com.lfj.messenger.eventbus.EventBus;
 import com.lfj.messenger.events.net.*;
 import com.lfj.messenger.time.Time;
+
+import com.lfj.messfox.protocol.Protocol;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.util.AttributeKey;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,21 +61,11 @@ public class ClientHandle extends ChannelInboundHandlerAdapter {
             }
             case MessageTypeConstants.MESSAGE_RESPONSE -> {
                 logger.trace("Message received");
-                MessageResponse response = (MessageResponse) message;
-                MessageDTO messageDTO = response.message();
-                Channel channel = this.client.getChannel().orElse(null);
-                if(channel == null || !channel.isActive()) return;
-                List<UserDTO> users = channel.attr(Attributes.users).get();
-                if(users == null) return;
-                UserDTO sender = users.stream().filter(u -> u.userId().equals(messageDTO.sender())).findFirst().orElse(null);
-                if(sender == null) return;
-                this.eventBus.publishAsync(new MessageResponseEvent(sender.displayName(), messageDTO.content(), Time.getTime(messageDTO.instant())));
+                MessageResponse messageResponse = (MessageResponse) obj;
             }
             case MessageTypeConstants.CHATS_RESPONSE -> {
                 logger.trace("Chat_response");
                 ChatsResponse response = (ChatsResponse) message;
-                for(UserDTO user : ((ChatsResponse) message).users()) logger.info("{} - {}\n", user.userId(), user.displayName());
-                ctx.channel().attr(Attributes.users).set(response.users());
             }
             case MessageTypeConstants.ERROR_RESPONSE -> {
                 ErrorResponse response = (ErrorResponse) message;
@@ -97,6 +89,7 @@ public class ClientHandle extends ChannelInboundHandlerAdapter {
         cause.printStackTrace();
         if(cause instanceof Error) ctx.close();
     }
+
     private void authRequest(AuthRequestEvent event){
         if(!client.isConnected()){
             logger.warn("Client is not connected. Skip");
@@ -111,7 +104,7 @@ public class ClientHandle extends ChannelInboundHandlerAdapter {
             return;
         }
         Channel channel = client.getChannel().orElse(null);
-        if(channel != null && channel.isActive()) channel.writeAndFlush(new RegisterRequest(UUID.randomUUID(), event.name(), event.name(), event.email(), event.password(), Time.nowInstant()));
+        if(channel != null && channel.isActive()) channel.writeAndFlush(new RegisterRequest(UUID.randomUUID(), new User(event.name(), event.email(), event.password()), Time.nowInstant()));
     }
     private void messageRequest (MessageRequestEvent event){
         if(!client.isConnected()){
@@ -121,13 +114,8 @@ public class ClientHandle extends ChannelInboundHandlerAdapter {
         Channel channel = client.getChannel().orElse(null);
         if(channel != null && channel.isActive()) {
             UserDTO user = channel.attr(Attributes.user).get();
-            List<UserDTO> users = channel.attr(Attributes.users).get();
-            if(user != null && users != null){
-                UserDTO receiver = users.stream().filter(u -> u.displayName().equals(event.name())).findFirst().orElse(null);
-                if(receiver == null) return;
-                MessageDTO message = new MessageDTO(UUID.randomUUID(), null, user, receiver.userId(), MessageType.TEXT.name(), event.message(), Time.nowInstant());
-                channel.writeAndFlush(new MessageRequest(UUID.randomUUID(), message, Time.nowInstant()));
-            }
+            com.lfj.messenger.dto.datatype.client.Message message = new com.lfj.messenger.dto.datatype.client.Message(event.chatId(), user, MessageType.TEXT, event.message());
+            channel.writeAndFlush(new MessageRequest(UUID.randomUUID(), message, Time.nowInstant()));
         }
     }
     private void chatsRequest(ChatsRequestEvent event){
@@ -136,7 +124,7 @@ public class ClientHandle extends ChannelInboundHandlerAdapter {
             return;
         }
         Channel channel = client.getChannel().orElse(null);
-        if(channel != null && channel.isActive()) channel.writeAndFlush(new ChatsRequest(UUID.randomUUID(), Time.nowInstant()));
+        if(channel != null && channel.isActive()) channel.writeAndFlush(new ChatsRequest(UUID.randomUUID(), event.chatId(), Time.nowInstant()));
     }
     public static class Attributes{
         public static final AttributeKey<UserDTO> user = AttributeKey.valueOf("user");
