@@ -26,6 +26,7 @@
                 <scope>import</scope>
             </dependency>
         </dependencies>
+
     </dependencyManagement>
     <dependencies>
         <dependency>
@@ -36,6 +37,11 @@
         <dependency>
             <groupId>com.lfj.messfox</groupId>
             <artifactId>shared</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.lfj.messfox</groupId>
+            <artifactId>EventBus</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
         <dependency>
