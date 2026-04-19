@@ -2,4 +2,4 @@ package com.lfj.messenger.events.net;
 
 import com.lfj.messenger.eventbus.Event;
 
-public record ConnectionEvent () implements Event {  }
+public record SetUsernameRequestEvent(String userName) implements Event {  }

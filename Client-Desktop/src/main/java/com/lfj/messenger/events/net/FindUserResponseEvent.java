@@ -3,4 +3,4 @@ package com.lfj.messenger.events.net;
 import com.lfj.messenger.eventbus.Event;
 import com.lfj.messfox.protocol.datatype.User;
 
-public record RegisterResponseEvent(User user) implements Event {  }
+public record FindUserResponseEvent(User user) implements Event {  }

@@ -4,8 +4,4 @@ import com.lfj.messenger.eventbus.Event;
 
 import java.util.UUID;
 
-public record MessageRequestEvent(
-        UUID chatId,
-        String message
-) implements Event {
-}
+public record GetLastMessageRequestEvent(UUID chatId) implements Event {  }
