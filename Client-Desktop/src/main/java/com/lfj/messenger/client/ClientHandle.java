@@ -1,33 +1,27 @@
 package com.lfj.messenger.client;
 
-import com.lfj.messenger.dto.Message;
-import com.lfj.messenger.dto.datatype.client.User;
-import com.lfj.messenger.dto.datatype.server.MessageDTO;
-import com.lfj.messenger.dto.datatype.server.UserDTO;
-import com.lfj.messenger.dto.request.*;
-import com.lfj.messenger.dto.response.*;
-import com.lfj.messenger.dto.types.MessageType;
-import com.lfj.messenger.dto.types.MessageTypeConstants;
 import com.lfj.messenger.eventbus.EventBus;
 import com.lfj.messenger.events.net.*;
 import com.lfj.messenger.time.Time;
 
 import com.lfj.messfox.protocol.Protocol;
+import com.lfj.messfox.protocol.request.AuthRequest;
+import com.lfj.messfox.protocol.request.HeartbeatRequest;
+import com.lfj.messfox.protocol.response.*;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
-import io.netty.util.AttributeKey;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import java.util.UUID;
 
 public class ClientHandle extends ChannelInboundHandlerAdapter {
     private Logger logger;
+    private final String isNotConnection = "Client is not connected. Skip";
 
     private EventBus eventBus;
     private Client client;
@@ -36,42 +30,45 @@ public class ClientHandle extends ChannelInboundHandlerAdapter {
         this.eventBus = eventBus;
         this.client = client;
         this.eventBus.subscribe(AuthRequestEvent.class, this::authRequest);
-        this.eventBus.subscribe(RegisterRequestEvent.class, this::registerRequest);
-        this.eventBus.subscribe(MessageRequestEvent.class, this::messageRequest);
-        this.eventBus.subscribe(ChatsRequestEvent.class, this::chatsRequest);
     }
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
     }
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object obj){
-        if(!(obj instanceof Message message)) return;
-        switch (message.type()){
-            case MessageTypeConstants.AUTH_RESPONSE -> {
-                logger.trace("Authorization success.");
-                AuthResponse response = (AuthResponse) message;
-                ctx.channel().attr(Attributes.user).set(response.user());
-                this.eventBus.publishAsync(new AuthResponseEvent());
+        if(!(obj instanceof Protocol)) return;
+        switch (obj){
+            case AuthResponse response -> {
+                eventBus.publish(new AuthResponseEvent(response.getUser()));
             }
-            case MessageTypeConstants.REGISTER_RESPONSE -> {
-                logger.trace("Register success");
-                RegisterResponse response = (RegisterResponse) message;
-                ctx.channel().attr(Attributes.user).set(response.user());
-                this.eventBus.publishAsync(new RegisterResponseEvent());
+            case RegisterResponse response -> {
+                eventBus.publish(new RegisterResponseEvent(response.getUser()));
             }
-            case MessageTypeConstants.MESSAGE_RESPONSE -> {
-                logger.trace("Message received");
-                MessageResponse messageResponse = (MessageResponse) obj;
+            case ReceiveMessageResponse response -> {
+                eventBus.publish(new ReceiveMessageResponseEvent(response.getMessage()));
             }
-            case MessageTypeConstants.CHATS_RESPONSE -> {
-                logger.trace("Chat_response");
-                ChatsResponse response = (ChatsResponse) message;
+            case CreatePrivateChatResponse response -> {
+                eventBus.publish(new CreatePrivateChatResponseEvent(response.getChat()));
             }
-            case MessageTypeConstants.ERROR_RESPONSE -> {
-                ErrorResponse response = (ErrorResponse) message;
-                logger.info("{} - {}\n", response.errorMessage(), response.errorCode());
+            case CreateGroupChatResponse response -> {
+                eventBus.publish(new CreateChatResponseEvent(response.getChat()));
             }
-            default -> logger.warn("Invalid message type case.");
+            case FindUserByUsernameResponse response -> {
+                eventBus.publish(new FindUserResponseEvent(response.getUsers().getFirst()));
+            }
+            case GetLastMessageResponse response -> {
+                eventBus.publish(new GetLastMessageResponseEvent(response.getLastMessage()));
+            }
+            case SetUsernameResponse response -> {
+                eventBus.publish(new SetUsernameResponseEvent(response.getUser()));
+            }
+            case ErrorResponse response -> {
+                eventBus.publish(new ErrorResponseEvent(response.getException()));
+            }
+            case HeartbeatsResponse response -> {
+                IO.println("Meow");
+            }
+            default -> IO.println("Meow...");
         }
     }
     @Override
@@ -92,42 +89,20 @@ public class ClientHandle extends ChannelInboundHandlerAdapter {
 
     private void authRequest(AuthRequestEvent event){
         if(!client.isConnected()){
-            logger.warn("Client is not connected. Skip");
+            logger.warn(isNotConnection);
             return;
         }
         Channel channel = client.getChannel().orElse(null);
         if(channel != null && channel.isActive()) channel.writeAndFlush(new AuthRequest(UUID.randomUUID(), event.email(), event.password(), Time.nowInstant()));
     }
-    private void registerRequest(RegisterRequestEvent event){
-        if(!client.isConnected()){
-            logger.warn("Client is not connected. Skip");
-            return;
-        }
-        Channel channel = client.getChannel().orElse(null);
-        if(channel != null && channel.isActive()) channel.writeAndFlush(new RegisterRequest(UUID.randomUUID(), new User(event.name(), event.email(), event.password()), Time.nowInstant()));
-    }
-    private void messageRequest (MessageRequestEvent event){
-        if(!client.isConnected()){
-            logger.warn("Client is not connected. Skip");
-            return;
-        }
-        Channel channel = client.getChannel().orElse(null);
-        if(channel != null && channel.isActive()) {
-            UserDTO user = channel.attr(Attributes.user).get();
-            com.lfj.messenger.dto.datatype.client.Message message = new com.lfj.messenger.dto.datatype.client.Message(event.chatId(), user, MessageType.TEXT, event.message());
-            channel.writeAndFlush(new MessageRequest(UUID.randomUUID(), message, Time.nowInstant()));
-        }
-    }
+    /*
     private void chatsRequest(ChatsRequestEvent event){
         if(!client.isConnected()){
-            logger.warn("Client is not connected. Skip");
+            logger.warn(isNotConnection);
             return;
         }
         Channel channel = client.getChannel().orElse(null);
         if(channel != null && channel.isActive()) channel.writeAndFlush(new ChatsRequest(UUID.randomUUID(), event.chatId(), Time.nowInstant()));
     }
-    public static class Attributes{
-        public static final AttributeKey<UserDTO> user = AttributeKey.valueOf("user");
-        public static final AttributeKey<List<UserDTO>> users = AttributeKey.valueOf("users");
-    }
+    */
 }

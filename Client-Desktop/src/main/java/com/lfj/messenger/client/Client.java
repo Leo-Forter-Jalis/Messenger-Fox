@@ -19,12 +19,12 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 public class Client {
-   private Logger logger;
+   private final Logger logger;
 
    private ChannelFuture channelFuture;
    private Channel channel;
    private EventLoopGroup loopGroup;
-   private EventBus eventBus;
+   private final EventBus eventBus;
    private volatile boolean connected = false;
    private CountDownLatch downLatch = new CountDownLatch(1);
    private boolean isTest = false;
@@ -68,6 +68,7 @@ public class Client {
                logger.warn("Failed to connect >> {}\n", future.cause().getMessage());
             }
             this.downLatch.countDown();
+            IO.println("Мяу >> " + downLatch.getCount());
          });
          this.eventBus.subscribe(ShutdownEvent.class, this::shutdown);
          if(!this.downLatch.await(10, TimeUnit.SECONDS)){
