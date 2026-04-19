@@ -29,7 +29,7 @@ public class ProtocolTest {
             new ChatsRequest(UUID.randomUUID(), UUID.randomUUID(), Instant.now());
             new ChatsResponse(UUID.randomUUID(), null, null, Instant.now());
             new MessageRequest(UUID.randomUUID(), new Message(null, null, null, null), Instant.now());
-            new MessageResponse(UUID.randomUUID(), new MessageDTO(UUID.randomUUID(), null, new UserDTO(UUID.randomUUID(), "TEST", "TEST", Instant.now()), MessageType.TEXT, "АХАХАХАХХА", null), Instant.now());
+            new MessageResponse(UUID.randomUUID(), new MessageDTO(UUID.randomUUID(), UUID.randomUUID(), new UserDTO(UUID.randomUUID(), "TEST", "TEST", Instant.now()), MessageType.TEXT, "АХАХАХАХХА", null), Instant.now());
         });
     }
     @Test
