@@ -8,7 +8,7 @@ import java.util.*
 
 data class User(val userId: UUID,
                 val displayName: String,
-                val userName: String?, // optional parameter
+                var userName: String?, // optional parameter
                 val createdAt: Instant)
 
 data class Message(val messageId: UUID,
@@ -21,7 +21,7 @@ data class Message(val messageId: UUID,
 data class Chat(
     val chatId: UUID,
     val chatType: ChatType,
-    val chatTag: String?, // optional parameter
+    var chatTag: String?, // optional parameter
     val chatName: String?,
     val members: List<ChatMember>?, // optional parameter
     val createdAt: Instant)
