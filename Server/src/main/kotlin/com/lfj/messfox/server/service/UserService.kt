@@ -1,10 +1,12 @@
 package com.lfj.messfox.server.service
 
+import com.lfj.messfox.exceptions.MessFoxException
 import com.lfj.messfox.protocol.Response
 import com.lfj.messfox.protocol.request.*
 import com.lfj.messfox.protocol.response.*
 import com.lfj.messfox.server.dao.UserDataTable
 import java.time.Instant
+import java.util.*
 
 class UserService (private val userDAO: UserDataTable) {
     fun registrationUser(request: RegisterRequest) : Response{
@@ -14,6 +16,7 @@ class UserService (private val userDAO: UserDataTable) {
             }, onFailure = { exception -> ErrorResponse(request.requestId, exception, Instant.now()) }
         )
     }
+
     fun authorizationUser(request: AuthRequest) : Response{
         return userDAO.authorizationUser(request.email, request.password).fold(
             onSuccess = { user ->
@@ -46,4 +49,10 @@ class UserService (private val userDAO: UserDataTable) {
         )
     }
 
+    fun setUserName(request: SetUsernameRequest, userId: UUID) : Response{
+        if(!userDAO.setUserName(request.userName, userId)) return ErrorResponse(request.requestId, MessFoxException("Error set userName"), Instant.now())
+        val result = userDAO.findUserById(userId)
+        return if(result.isSuccess) SetUsernameResponse(request.requestId, result.getOrThrow(), Instant.now())
+        else ErrorResponse(request.requestId, MessFoxException("Error set userName"), Instant.now())
+    }
 }
