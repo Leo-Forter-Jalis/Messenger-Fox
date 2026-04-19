@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<Configuration status="Warn">
+<Configuration status="WARN">
     <Appenders>
-        <Console name="Console" targer="SYSTEM_OUT">
-            <ParrentLayout pattern="%d{yyyy MM dd HH:mm:ss} [%t, %logger:$M] %-5level >> %msg%n "/>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern=" [%d{yyyy-MM-dd | HH:mm:ss}] %msg%n"/>
         </Console>
     </Appenders>
     <Loggers>

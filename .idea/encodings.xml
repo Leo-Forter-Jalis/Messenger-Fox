@@ -5,6 +5,10 @@
     <file url="file://$PROJECT_DIR$/API/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/Client-Desktop/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/Client-Desktop/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/EventBus/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/EventBus/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/Exceptions/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/Exceptions/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/Protocol/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/Protocol/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/Server/src/main/java" charset="UTF-8" />
