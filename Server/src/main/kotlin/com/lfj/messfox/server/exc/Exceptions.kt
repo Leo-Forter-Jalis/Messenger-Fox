@@ -20,8 +20,7 @@ class FindUserOperationException(override val message: String,
                                  override val cause: Throwable? = null)
     : DatabaseOperationException(message, cause)
 
-
-
 // Service
 
-
+class ServiceException(override val message: String,
+                       override val cause: Throwable? = null) : MessFoxException(message, cause)
