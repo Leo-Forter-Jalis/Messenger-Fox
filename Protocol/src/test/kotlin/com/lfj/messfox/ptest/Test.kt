@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import com.lfj.messfox.exceptions.MessFoxException
 import com.lfj.messfox.protocol.Protocol
 import com.lfj.messfox.protocol.datatype.Chat
 import com.lfj.messfox.protocol.datatype.ChatMember
@@ -56,10 +55,10 @@ class TestTest{
             HeartbeatsResponse(randomUUID(), now()),
             SendMessageRequest(randomUUID(), chat.chatId, MessageType.TEXT, "TEST", now()),
             ReceiveMessageResponse(randomUUID(), Message(randomUUID(), chat.chatId, user, MessageType.TEXT, "TEST", now()), now()),
-            ErrorResponse(randomUUID(), MessFoxException("Test"),now()),
+            ErrorResponse(randomUUID(), Exception("Test"),now()),
             GetLastMessageRequest(randomUUID(), chat.chatId, now()),
-            GetLatestMessagesRequest(randomUUID(), chat.chatId, 5, now()),
-            GetMessagesAfterRequest(randomUUID(), chat.chatId, randomUUID(), 5, now()),
+            GetLatestMessagesRequest(randomUUID(), chat.chatId,  now()),
+            GetMessagesAfterRequest(randomUUID(), chat.chatId, randomUUID(), now()),
             GetLastMessageResponse(randomUUID(), message, now()),
             GetLatestMessagesResponse(randomUUID(), chat.chatId, listOf(message), now()),
             GetMessagesAfterResponse(randomUUID(), chat.chatId, listOf(message), now()),
@@ -69,15 +68,9 @@ class TestTest{
             FindUserByUsernameResponse(randomUUID(), listOf(), now()),
             FindUserByDisplayNameRequest(randomUUID(), user.displayName, now()),
             FindUserByDisplayNameResponse(randomUUID(), listOf(user), now()),
-            CreateGroupChatRequest(randomUUID(), chat.chatName!!, chat.chatTag, listOf(randomUUID()),user.userId,now()),
+            CreateGroupChatRequest(randomUUID(), chat.chatName!!, chat.chatTag, listOf(randomUUID()),now()),
             CreateGroupChatResponse(randomUUID(), chat, now()),
-            CreatePrivateChatRequest(randomUUID(), listOf(user.userId, randomUUID()), now()),
-            CreatePrivateChatResponse(randomUUID(), chat, now()),
-            DeleteChatRequest(randomUUID(), chat.chatId, now()),
-            DeleteChatResponse(randomUUID(), now()),
-            FindChatForIdRequest(randomUUID(), chat.chatId, now()),
-            FindChatForIdResponse(randomUUID(), chat, now()),
-            FindChatForTagRequest(randomUUID(), "tag", now()),
+            CreatePrivateChatRequest(randomUUID(), user.userId, now()),
             FindChatForTagResponse(randomUUID(), listOf(chat), now()),
             FindChatForNameRequest(randomUUID(), chat.chatName, now()),
             FindChatForNameResponse(randomUUID(), listOf(chat), now()),
