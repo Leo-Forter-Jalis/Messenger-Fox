@@ -1,6 +1,5 @@
 package com.lfj.messfox.servertest
 
-import com.lfj.messenger.servertest.DatabaseTest
 import com.lfj.messfox.protocol.Response
 import com.lfj.messfox.protocol.datatype.User
 import com.lfj.messfox.protocol.request.*
@@ -11,18 +10,17 @@ import com.lfj.messfox.server.dao.ChatMemberDataTable.H2ChatMemberDao
 import com.lfj.messfox.server.dao.MessageDataTable.H2MessageDAO
 import com.lfj.messfox.server.dao.UserDataTable.H2UserDAO
 import com.lfj.messfox.server.service.ChatService
+import com.lfj.messfox.server.service.DataBase
 import com.lfj.messfox.server.service.MessageService
 import com.lfj.messfox.server.service.UserService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import java.time.Instant
 import java.time.Instant.now
-import java.util.*
 import java.util.UUID.randomUUID
 import javax.sql.DataSource
 
 class ServiceTest {
-    val dataSource : DataSource = DatabaseTest.getDataSource()
+    val dataSource: DataSource = DataBase.H2TestDB.dataSource()
     val userDao = H2UserDAO(dataSource)
     val chatDao = H2ChatDAO(dataSource)
     val messageDao = H2MessageDAO(dataSource)
@@ -30,8 +28,8 @@ class ServiceTest {
     @Test
     fun userDaoTest(){
         val userService: UserService = UserService(userDao)
-        val request: RegisterRequest = RegisterRequest(UUID.randomUUID(), "Example", "example@mail.com", "12345", Instant.now())
-        val request1: AuthRequest = AuthRequest(UUID.randomUUID(), "example@mail.com", "12345", Instant.now())
+        val request: RegisterRequest = RegisterRequest(randomUUID(), "Example", "example@mail.com", "12345", now())
+        val request1: AuthRequest = AuthRequest(randomUUID(), "example@mail.com", "12345", now())
         val response: Response = userService.authorizationUser(request1)
         val response1: Response = userService.registrationUser(request)
         val user: User? = if(response1 is RegisterResponse) response1.user else null
@@ -43,9 +41,12 @@ class ServiceTest {
         assert(response3 is AuthResponse, { "response3 is not AuthResponse >> ${response3.type}" })
         user?.let{
             println("User state test")
-            val request4: FindUserByIdRequest = FindUserByIdRequest(UUID.randomUUID(), user.userId, Instant.now())
-            val request5: FindUserByUsernameRequest = FindUserByUsernameRequest(UUID.randomUUID(), "test", Instant.now())
-            val request6: FindUserByDisplayNameRequest = FindUserByDisplayNameRequest(UUID.randomUUID(), user.displayName, Instant.now())
+            val request4: FindUserByIdRequest = FindUserByIdRequest(randomUUID(), user.userId, now())
+            val request5: FindUserByUsernameRequest = FindUserByUsernameRequest(randomUUID(), "test", now())
+            val request6: FindUserByDisplayNameRequest = FindUserByDisplayNameRequest(
+                randomUUID(), user.displayName,
+                now()
+            )
             val response4: Response = userService.findUserById(request4)
             val response5: Response = userService.findUserById(request4)
             val response6: Response = userService.findUserByUsername(request5)
@@ -65,12 +66,12 @@ class ServiceTest {
         if(response1 is RegisterResponse && response2 is RegisterResponse){
             println(response1.user)
             println(response2.user)
-            val request: CreatePrivateChatRequest = CreatePrivateChatRequest(randomUUID(), listOf(response1.user.userId, response2.user.userId), now())
-            val request1: CreateGroupChatRequest = CreateGroupChatRequest(randomUUID(), "TEST", "Meow", listOf(response2.user.userId), response1.user.userId, now())
-            val request2: CreateGroupChatRequest = CreateGroupChatRequest(randomUUID(), "TEST", null, listOf(response2.user.userId), response1.user.userId, now())
-            val response3: Response = chatService.createGroupChat(request1)
-            val response4: Response = chatService.createGroupChat(request2)
-            val response: Response = chatService.createPrivateChat(request)
+            val request: CreatePrivateChatRequest = CreatePrivateChatRequest(randomUUID(), response2.user.userId, now())
+            val request1: CreateGroupChatRequest = CreateGroupChatRequest(randomUUID(), "TEST", "Meow", listOf(response2.user.userId), now())
+            val request2: CreateGroupChatRequest = CreateGroupChatRequest(randomUUID(), "TEST", null, listOf(response2.user.userId), now())
+            val response3: Response = chatService.createGroupChat(request1, response1.user.userId)
+            val response4: Response = chatService.createGroupChat(request2, response1.user.userId)
+            val response: Response = chatService.createPrivateChat(request, response1.user.userId)
             println(response)
             println(response3)
             println(response4)
@@ -86,7 +87,7 @@ class ServiceTest {
         if(responseUser1 is RegisterResponse && responseUser2 is RegisterResponse){
             val user1 = responseUser1.user
             val user2 = responseUser2.user
-            val responseChat = chatService.createPrivateChat(CreatePrivateChatRequest(randomUUID(), listOf(user1.userId, user2.userId), now()))
+            val responseChat = chatService.createPrivateChat(CreatePrivateChatRequest(randomUUID(), user2.userId, now()), user1.userId)
             if(responseChat !is CreatePrivateChatResponse){
                 println(responseChat)
                 return
