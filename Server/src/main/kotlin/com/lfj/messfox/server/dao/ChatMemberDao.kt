@@ -124,7 +124,7 @@ interface ChatMemberDataTable {
                 WHERE chat_id = ? AND user_id = ?
             """.trimIndent()
             override val SELECT_MEMBERS_FOR_CHAT = """
-                SELECT user_id FROM chat_members_table
+                SELECT user_id, role, joined_at FROM chat_members_table
                 WHERE chat_id = ?
             """.trimIndent()
             override val SELECT_CHATS_FOR_USER = """

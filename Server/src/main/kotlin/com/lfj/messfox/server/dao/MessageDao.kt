@@ -1,7 +1,9 @@
 package com.lfj.messfox.server.dao
 
 import com.lfj.messenger.uuid7.UUIDv7
+import com.lfj.messfox.exceptions.MessFoxException
 import com.lfj.messfox.protocol.type.MessageType
+import com.lfj.messfox.server.ifPresentOrElseWithResult
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.sql.ResultSet
@@ -14,15 +16,19 @@ import kotlin.reflect.KClass
 
 interface MessageDataTable{
     fun insertMessage(chatId: UUID, senderId: UUID, messageType: MessageType, content: String) : Result<MessageBillet>
-    fun deleteMessage(messageId: UUID)
+    fun deleteMessage(messageId: UUID) : Boolean
     fun findMessageForId(messageId: UUID, chatId: UUID) : Result<MessageBillet>
     fun findMessagesForSenderId(senderId: UUID, chatId: UUID) : List<MessageBillet>
+    fun getLastMessage(chatId: UUID) : Result<MessageBillet>
 
     interface CompanionsSQLRequest{
         val INSERT_MESSAGE: String
         val DELETE_MESSAGE: String
         val FIND_MESSAGE_FOR_ID: String
         val FIND_MESSAGES_FOR_SENDER_ID: String
+        val GET_LAST_MESSAGE: String
+        val GET_LATEST_MESSAGES: String
+        val GET_ORDER_MESSAGES: String
     }
 
     fun mapToMessageBillet(rs: ResultSet) : MessageBillet{
@@ -54,16 +60,18 @@ interface MessageDataTable{
             }
         }
 
-        override fun deleteMessage(messageId: UUID) {
-            try {
+        override fun deleteMessage(messageId: UUID) : Boolean {
+            try { // Добавить проверку идентификатора отправителя
                 dataSource.connection.use { conn ->
                     conn.prepareStatement(sqlRequest.DELETE_MESSAGE).use { stmt ->
                         stmt.setObject(1, messageId)
                         stmt.executeUpdate()
+                        return true
                     }
                 }
             }catch (e: SQLException){
                 logger.error("MessageDAO Error", e)
+                return false
             }
         }
 
@@ -110,6 +118,22 @@ interface MessageDataTable{
                 listOf()
             }
         }
+        override fun getLastMessage(chatId: UUID) : Result<MessageBillet> {
+            return try{
+                dataSource.connection.use { conn ->
+                    conn.prepareStatement(sqlRequest.GET_LAST_MESSAGE).use { stmt ->
+                        stmt.setObject(1, chatId)
+                        stmt.executeQuery().use { rs ->
+                            if(rs.next()) Result.success(mapToMessageBillet(rs))
+                            else Result.failure(MessFoxException("Message not found!"))
+                        }
+                    }
+                }
+            }catch (e: SQLException){
+                logger.error("MessageDAO error", e)
+                Result.failure(MessFoxException("Message not found!", e))
+            }
+        }
     }
 
     class H2MessageDAO(override val dataSource: DataSource) : AbstractMessageDAO<H2MessageDAO>(dataSource, h2SQLRequest, H2MessageDAO::class){
@@ -120,8 +144,8 @@ interface MessageDataTable{
             """.trimIndent()
             override val DELETE_MESSAGE = """
                 DELETE FROM messages_table
-                WHERE message_id = ?
-            """.trimIndent()
+                WHERE message_id = ? AND user_id OR ? 
+            """.trimIndent() // ???
             override val FIND_MESSAGE_FOR_ID = """
                 SELECT message_id, chat_id, sender_id, message_type, content, created_at
                 FROM messages_table
@@ -132,6 +156,26 @@ interface MessageDataTable{
                 FROM messages_table
                 WHERE chat_id = ? AND sender_id = ?
                 LIMIT 19
+            """.trimIndent()
+            override val GET_LAST_MESSAGE: String = """
+                SELECT message_id, chat_id, sender_id, message_type, content, created_at
+                FROM messages_table
+                WHERE chat_id = ?
+                ORDER BY message_id DESC
+                LIMIT 1 
+            """.trimIndent()
+            override val GET_LATEST_MESSAGES: String = """
+                SELECT message_id, chat_id, sender_id, message_type, content, created_at
+                FROM messages_table
+                WHERE chat_id = ?
+                ORDER BY message_id DESC
+                LIMIT 50 
+            """.trimIndent()
+            override val GET_ORDER_MESSAGES: String = """
+                SELECT message_id, chat_id. sender_id, message_type, content, created_at
+                FROM messages_table
+                WHERE chat_id = ? AND message_id < ?
+                LIMIT 50 
             """.trimIndent()
         }
     }
@@ -156,6 +200,26 @@ interface MessageDataTable{
                 FROM messages_table
                 WHERE chat_id = ? AND sender_id = ?
                 LIMIT 19
+            """.trimIndent()
+            override val GET_LAST_MESSAGE: String = """
+                SELECT message_id, chat_id, sender_id, message_type, content, created_at
+                FROM messages_table
+                WHERE chat_id = ?
+                ORDER BY message_id DESC
+                LIMIT 1 
+            """.trimIndent()
+            override val GET_LATEST_MESSAGES: String = """
+                SELECT message_id, chat_id, sender_id, message_type, content, created_at
+                FROM messages_table
+                WHERE chat_id = ?
+                ORDER BY message_id DESC
+                LIMIT 50 
+            """.trimIndent()
+            override val GET_ORDER_MESSAGES: String = """
+                SELECT message_id, chat_id. sender_id, message_type, content, created_at
+                FROM messages_table
+                WHERE chat_id = ? AND message_id < ?
+                LIMIT 50 
             """.trimIndent()
         }
     }

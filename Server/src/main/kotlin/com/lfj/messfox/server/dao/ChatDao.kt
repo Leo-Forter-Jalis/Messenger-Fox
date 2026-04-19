@@ -2,6 +2,7 @@ package com.lfj.messfox.server.dao
 
 import com.lfj.messenger.uuid7.UUIDv7
 import com.lfj.messfox.protocol.type.ChatType
+import com.lfj.messfox.server.ifPresentOrElseWithResult
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.sql.JDBCType

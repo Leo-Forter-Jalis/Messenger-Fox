@@ -7,6 +7,7 @@ import com.lfj.messfox.protocol.datatype.User
 import com.lfj.messfox.server.exc.AuthorizationFailedException
 import com.lfj.messfox.server.exc.RegistrationFailedException
 import com.lfj.messfox.server.exc.UserAlreadyExistsException
+import com.lfj.messfox.server.ifPresentOrElseWithResult
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.sql.ResultSet
@@ -23,7 +24,7 @@ interface UserDataTable {
     fun findUserById(userId: UUID) : Result<User>
     fun findUserByUserName(userName: String) : Result<List<User>>
     fun findUserByDisplayName(displayName: String) : Result<List<User>>
-    fun setUserName(userName: String) : Result<User> // Пока без реализации
+    fun setUserName(userName: String, userId: UUID) : Boolean // Пока без реализации
 
     fun mapResultSetToUser(rs: ResultSet): User {
         return User(
@@ -43,6 +44,7 @@ interface UserDataTable {
         val FIND_USER_BY_ID: String
         val FIND_USER_BY_USER_NAME: String
         val FIND_USER_BY_DISPLAY_NAME: String
+        val SET_USER_NAME: String
     }
 
     open class AbstractUserDao <T : UserDataTable>(open val dataSource: DataSource, val sqlRequest: CompanionsSQLRequest, clazz: KClass<T>) : UserDataTable{
@@ -54,7 +56,7 @@ interface UserDataTable {
                     conn.prepareStatement(sqlRequest.INSERT_USER).use { stmt ->
                         val userId: UUID = UUIDv7.next()
                         val passwordHash: String = PasswordUtil.hashPassword(password)
-                        val rs: Result<User> = UUIDv7.getTimestamp(userId).ifPresentOrElseWithResult ({ createdAt ->
+                        val rs: Result<User> = UUIDv7.getTimestamp(userId).ifPresentOrElseWithResult({ createdAt ->
                             stmt.setObject(1, userId)
                             stmt.setString(2, displayName)
                             stmt.setObject(3, null)
@@ -165,8 +167,21 @@ interface UserDataTable {
             }
         }
 
-        override fun setUserName(userName: String): Result<User> {
-            TODO("Not yet implemented")
+        override fun setUserName(userName: String, userId: UUID): Boolean {
+            return try{
+                dataSource.connection.use { conn ->
+                    conn.prepareStatement(sqlRequest.SET_USER_NAME).use { stmt ->
+                        stmt.setString(1, userName)
+                        stmt.setObject(2, userId)
+                        val update = stmt.executeUpdate()
+                        logger.debug("Update >> {}", update)
+                        update == 1
+                    }
+                }
+            }catch (e: SQLException){
+                logger.error("UserDao error", e)
+                false
+            }
         }
     }
 
@@ -200,6 +215,11 @@ interface UserDataTable {
                 WHERE display_name ILIKE ?
                 LIMIT 10
             """.trimIndent()
+            override val SET_USER_NAME: String = """
+                UPDATE users_table
+                SET user_name = ?
+                WHERE user_id = ?
+            """.trimIndent()
         }
     }
     // H2 Database for testing
@@ -230,6 +250,11 @@ interface UserDataTable {
                 FROM users_table
                 WHERE display_name ILIKE ?
                 LIMIT 10
+            """.trimIndent()
+            override val SET_USER_NAME: String = """
+                UPDATE users_table
+                SET user_name = ?
+                WHERE user_id = ?
             """.trimIndent()
         }
     }
