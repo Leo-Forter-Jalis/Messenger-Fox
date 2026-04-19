@@ -1,6 +1,7 @@
 package com.lfj.messenger;
 
 import com.lfj.messenger.client.Client;
+import com.lfj.messenger.client.TestClientHandler;
 import com.lfj.messenger.eventbus.EventBus;
 import com.lfj.messenger.events.net.*;
 import org.slf4j.Logger;
