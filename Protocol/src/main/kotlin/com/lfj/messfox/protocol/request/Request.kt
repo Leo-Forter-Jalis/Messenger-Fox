@@ -16,12 +16,24 @@ data class RegisterRequest(override val requestId: UUID,
                            val password: String,
                            override val instant: Instant) // Отправить запрос на регистрацию
     : Request(requestId, type="REGISTER_REQUEST",instant)
+data class SetUsernameRequest(override val requestId: UUID,
+                              val userName: String,
+                              override val instant: Instant)
+    : Request(requestId, type = "SER_USERNAME_REQUEST", instant)
 data class SendMessageRequest(override val requestId: UUID,
                               val chatId: UUID,
                               val messageType: MessageType,
                               val content: String,
                               override val instant: Instant) // Отправить сообщение в чат
     : Request(requestId, type = "SEND_MESSAGE_REQUEST", instant)
+data class GetMessageForId(override val requestId: UUID,
+                           val messageId: UUID,
+                           override val instant: Instant)
+    : Request(requestId, type = "GET_MESSAGE_FOR_ID", instant)
+data class GetMessageForSenderId(override val requestId: UUID,
+                                 val userId: UUID,
+                                 override val instant: Instant)
+    : Request(requestId, type = "GET_MESSAGE_FOR_SENDER_ID", instant)
 data class GetLastMessageRequest(override val requestId: UUID,
                                  val chatId: UUID,
                                  override val instant: Instant) // Получение последнего сообщения
@@ -29,12 +41,10 @@ data class GetLastMessageRequest(override val requestId: UUID,
 data class GetMessagesAfterRequest(override val requestId: UUID,
                                       val chatId: UUID,
                                       val messageId: UUID,
-                                      val limit: Int,
                                       override val instant: Instant) // Получение сообщений по идентификатору сообщения
     : Request(requestId, type = "GET_MESSAGES_AFTER_REQUEST", instant)
 data class GetLatestMessagesRequest(override val requestId: UUID,
                              val chatId: UUID,
-                             val limit: Int,
                              override val instant: Instant) // Запрос на получение новых сообщений, при открытии чата
     : Request(requestId, type = "GET_LATEST_MESSAGES_REQUEST", instant)
 data class HeartbeatRequest(override val requestId: UUID,
@@ -44,11 +54,10 @@ data class CreateGroupChatRequest(override val requestId: UUID,
                              val chatName: String,
                              val chatTag: String?,
                              val invitedUser: List<UUID>?,
-                             val ownerId: UUID,
                              override val instant: Instant)
     : Request(requestId, type = "CREATE_GROUP_CHAT_REQUEST", instant)
 data class CreatePrivateChatRequest(override val requestId: UUID,
-                                    val twoUsers: List<UUID>,
+                                    val interlocutor: UUID,
                                     override val instant: Instant)
     : Request(requestId, "CREATE_PRIVATE_CHAT_REQUEST", instant)
 data class DeleteChatRequest(override val requestId: UUID,

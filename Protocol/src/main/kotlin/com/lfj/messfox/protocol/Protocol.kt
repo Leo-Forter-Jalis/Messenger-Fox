@@ -55,7 +55,9 @@ import java.util.*
         JsonSubTypes.Type(value = RemoveChatMemberRequest::class, name = "REMOVE_CHAT_MEMBER_REQUEST"),
         JsonSubTypes.Type(value = RemoveChatMemberResponse::class, name = "REMOVE_CHAT_MEMBER_RESPONSE"),
         JsonSubTypes.Type(value = ChatsForUserRequest::class, name = "CHATS_FOR_USER_REQUEST"),
-        JsonSubTypes.Type(value = ChatsForUserIdResponse::class, name = "CHATS_FOR_USER_ID_REQUEST")
+        JsonSubTypes.Type(value = ChatsForUserIdResponse::class, name = "CHATS_FOR_USER_ID_REQUEST"),
+        JsonSubTypes.Type(value = SetUsernameRequest::class, name = "SET_USERNAME_REQUEST"),
+        JsonSubTypes.Type(value = SetUsernameResponse::class, name = "SET_USERNAME_RESPONSE")
 )
 abstract class Protocol (open val requestId: UUID, open val type: String, open val instant: Instant)
 

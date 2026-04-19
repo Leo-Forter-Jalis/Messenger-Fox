@@ -6,7 +6,7 @@ import com.lfj.messfox.protocol.datatype.ChatMember
 import com.lfj.messfox.protocol.datatype.Message
 import com.lfj.messfox.protocol.datatype.User
 import java.time.Instant
-import java.util.*
+import java.util.UUID
 
 data class AuthResponse(override val requestId: UUID, // User
                         val user: User,
@@ -16,6 +16,10 @@ data class RegisterResponse(override val requestId: UUID, // User
                             val user: User,
                             override val instant: Instant) // Ответ регистрации
     : Response(requestId, type = "REGISTER_RESPONSE", instant)
+data class SetUsernameResponse(override val requestId: UUID,
+                               val user: User,
+                               override val instant: Instant)
+    : Response(requestId, type = "SET_USERNAME_RESPONSE", instant)
 data class ErrorResponse(override val requestId: UUID,
                          val exception: Throwable,
                          override val instant: Instant) // Возвращение ошибки
@@ -31,14 +35,14 @@ data class CreateGroupChatResponse(override val requestId: UUID,
 data class CreatePrivateChatResponse(override val requestId: UUID,
                                      val chat: Chat,
                                      override val instant: Instant)
-    : Response(requestId, "CREATE_PRIVATE_CHAT_RESPONSE", instant)
+    : Response(requestId, type = "CREATE_PRIVATE_CHAT_RESPONSE", instant)
 data class DeleteChatResponse(override val requestId: UUID,
                               override val instant: Instant)
     : Response(requestId, type = "DELETE_CHAT_RESPONSE", instant)
 data class AddMemberChatResponse(override val requestId: UUID, // Add members in chat
                                  val members: List<ChatMember>,
                                  override val instant: Instant)
-    : Response(requestId, "ADD_MEMBER_CHAT_RESPONSE", instant)
+    : Response(requestId, type = "ADD_MEMBER_CHAT_RESPONSE", instant)
 data class RemoveChatMemberResponse(override val requestId: UUID,
                                    val chatId: UUID,
                                    val userId: UUID,
@@ -67,6 +71,14 @@ data class FindChatForNameResponse(override val requestId: UUID,
 data class HeartbeatsResponse(override val requestId: UUID, // Возвращает информацию о подключении
                       override val instant: Instant)
     : Response(requestId, type = "HEARTBEAT_RESPONSE", instant)
+data class GetMessageForId(override val requestId: UUID,
+                           val message: Message,
+                           override val instant: Instant)
+    : Response(requestId, type = "GET_MESSAGE_FOR_ID", instant)
+data class GetMessageForSenderId(override val requestId: UUID,
+                                 val messages: List<Message>,
+                                 override val instant: Instant)
+    : Response(requestId, type = "GET_MESSAGE_FOR_SENDER_ID", instant)
 data class GetLastMessageResponse(override val requestId: UUID, // Получение последнего сообщение
                                   val lastMessage: Message,
                                   override val instant: Instant)
@@ -84,13 +96,12 @@ data class GetMessagesAfterResponse(override val requestId: UUID, // Получ�
 data class FindUserByIdResponse(override val requestId: UUID,
                                 val user: User,
                                 override val instant: Instant)
-    : Response(requestId, "FIND_USER_BY_ID_RESPONSE", instant)
+    : Response(requestId, type = "FIND_USER_BY_ID_RESPONSE", instant)
 data class FindUserByUsernameResponse(override val requestId: UUID,
                                       val users: List<User>,
                                       override val instant: Instant)
-    : Response(requestId, "FIND_USER_BY_USERNAME_RESPONSE", instant)
-
+    : Response(requestId, type = "FIND_USER_BY_USERNAME_RESPONSE", instant)
 data class FindUserByDisplayNameResponse(override val requestId: UUID,
                                       val users: List<User>,
                                       override val instant: Instant)
-    : Response(requestId, "FIND_USER_BY_DISPLAY_NAME_RESPONSE", instant)
+    : Response(requestId, type = "FIND_USER_BY_DISPLAY_NAME_RESPONSE", instant)
