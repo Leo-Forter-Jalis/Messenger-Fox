@@ -5,5 +5,4 @@ import com.lfj.messenger.eventbus.Event;
 public record AuthRequestEvent(
         String email,
         String password
-) implements Event {
-}
+) implements Event {  }

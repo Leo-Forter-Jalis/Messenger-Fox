@@ -12,8 +12,8 @@ public class TestLogger {
         Logger logger = LoggerFactory.getLogger(TestLogger.class);
         logger.info("Info!");
         logger.warn("Warn!");
-        logger.error("Error!");
         logger.debug("Debug!");
+        logger.error("Error!");
         logger.trace("Trace!");
     }
 }

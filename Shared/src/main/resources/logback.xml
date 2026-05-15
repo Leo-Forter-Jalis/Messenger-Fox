@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<configuration>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender" >
+        <encoder>
+            <pattern> [%d{yyyy-MM-dd | HH:mm:ss}] [%thread | %logger] %highlight(%-5level) - %msg%n </pattern>
+        </encoder>
+        <withJansi>true</withJansi>
+    </appender>
+
+    <conversionRule coversionWord="highlight" converterClass="ch.qos.logback.classic.pattern.HighlightingCompositeConverter">
+        <color>
+            <level>ERROR</level>
+            <color>red</color>
+            <style>bold</style>
+        </color>
+        <color>
+            <level>WARN</level>
+            <color>yellow</color>
+        </color>
+        <color>
+            <level>INFO</level>
+            <color>green</color>
+        </color>
+        <color>
+            <level>DEBUG</level>
+            <color>blue</color>
+        </color>
+        <color>
+            <level>TRACE</level>
+            <color>magenta</color>
+        </color>
+    </conversionRule>
+
+    <root level="info">
+        <appender-ref ref="STDOUT"/>
+    </root>
+    <logger name="com.lfj.messfox" level="trace" additivity="false">
+        <appender-ref ref="STDOUT"/>
+    </logger>
+    <logger name="com.lfj.messenger" level="trace" additivity="false">
+        <appender-ref ref="STDOUT"/>
+    </logger>
+</configuration>
