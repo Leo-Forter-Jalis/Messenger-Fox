@@ -4,10 +4,7 @@ import com.lfj.dev.annotations.EventBusSubscriber;
 import com.lfj.messenger.eventbus.EventBus;
 import com.lfj.messenger.events.net.*;
 import com.lfj.messfox.protocol.request.*;
-import com.lfj.messfox.protocol.response.CreateGroupChatResponse;
-import com.lfj.messfox.protocol.response.CreatePrivateChatResponse;
-import com.lfj.messfox.protocol.response.FindUserByUsernameResponse;
-import com.lfj.messfox.protocol.response.RegisterResponse;
+import com.lfj.messfox.protocol.response.*;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
@@ -34,12 +31,16 @@ public class TestClientHandler extends ChannelInboundHandlerAdapter {
     }
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg){
-        if(msg instanceof CreateGroupChatResponse response){
+        if(msg instanceof AuthResponse response){
+            eventBus.publish(new AuthResponseEvent(response.getUser()));
+        }else if(msg instanceof CreateGroupChatResponse response){
             eventBus.publish(new CreateChatResponseEvent(response.component2()));
         }else if(msg instanceof FindUserByUsernameResponse response) {
             eventBus.publish(new FindUserResponseEvent(response.getUsers().getFirst()));
         } else if (msg instanceof CreatePrivateChatResponse response) {
             eventBus.publish(new CreatePrivateChatResponseEvent(response.getChat()));
+        } else if (msg instanceof ReceiveMessageResponse response) {
+            eventBus.publish(new ReceiveMessageResponseEvent(response.getMessage()));
         }
         IO.println("Reading...");
         IO.println(msg.toString());

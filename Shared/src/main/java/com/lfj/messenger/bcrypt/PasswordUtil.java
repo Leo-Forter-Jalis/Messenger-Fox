@@ -5,7 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public final class PasswordUtil {
-    private static Logger logger = LoggerFactory.getLogger(PasswordUtil.class);
+    private static final Logger logger = LoggerFactory.getLogger(PasswordUtil.class);
     private static final int COST = 15;
     private PasswordUtil(){
         throw new UnsupportedOperationException("Utility class");
